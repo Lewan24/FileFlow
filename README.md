@@ -26,7 +26,7 @@ My goal is to learn how the version control system works (backend) and create fu
 <hr>
 
 # Requirements
-All you need to run this tool is installed .NET 8
+All you need to run this tool is installed <strong>.NET 8</strong>
 <hr>
 
 # How to run
@@ -35,12 +35,16 @@ For now the simpliest way to run the tool:
 ```bash
 git clone https://github.com/Lewan24/FileFlow.git
 ```
-- Go inside the repo directory and navigate to: "src -> FileFlow.Cli"
+- Go inside the repo directory and navigate to: <strong>"src -> FileFlow.Cli"</strong>
 - Then run command:
 ```bash
 dotnet run -- [Tool commands]
 ```
-The [Tool commands] is actually the commands of the cli tool that you can use. This is how you can run help command:
+The <strong>[Tool commands]</strong> is actually the commands of the cli tool that you can use. This is how you can run help command:
 ```bash
 dotnet run -- -h
 ```
+
+# Additional links
+- Milanote board: <strong>[Not created yet]</strong>
+- Trello board: <strong>[Not created yet]</strong>
