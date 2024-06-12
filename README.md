@@ -1,6 +1,8 @@
 ![Static Badge](https://img.shields.io/badge/.NET%208-8A2BE2?style=for-the-badge)
 ![Static Badge](https://img.shields.io/badge/CLI%20Tool-blue?style=for-the-badge)
-![Static Badge](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)<br><br>
+
+[![.NET](https://github.com/Lewan24/FileFlow/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/Lewan24/FileFlow/actions/workflows/dotnet.yml)
 <br><br>
 
 <hr>
