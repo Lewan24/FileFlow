@@ -27,4 +27,4 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Test tool
-      run: dotnet run -- -h
+      run: dotnet run --project FileFlow.Cli.csproj -- -h
