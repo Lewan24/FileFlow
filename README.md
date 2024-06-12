@@ -5,6 +5,8 @@
 [![.NET](https://github.com/Lewan24/FileFlow/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/Lewan24/FileFlow/actions/workflows/dotnet.yml)
 <br><br>
 
+![Logo](https://github.com/Lewan24/FileFlow/blob/master/Images/FileFlow_Logo.png)
+
 <hr>
 
 # Idea
