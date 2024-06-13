@@ -87,4 +87,4 @@ It will be available when I publish and deploy nuget into store.
 
 # Additional links
 - Milanote board: <strong>[Not created yet]</strong>
-- Trello board: <strong>[Not created yet]</strong>
+- Trello board: <strong>https://trello.com/b/uKlrGHbJ</strong>
