@@ -1,9 +1,13 @@
-﻿namespace FileFlow.Shared.Interfaces;
+﻿using FileFlow.Core.Entities;
+using OneOf;
+using OneOf.Types;
+
+namespace FileFlow.Shared.Interfaces;
 
 /// <summary>
 /// Global service containing all needed functions to allow service work properly
 /// </summary>
-public interface IRepoService : IRepoConfigService, IRepoChangesService;
+public interface IRepoService : IRepoConfigService, IRepoChangesService, IRepoHistoryService;
 
 /// <summary>
 /// Basic functions like initialization
@@ -32,6 +36,18 @@ public interface IRepoChangesService
     /// <summary>
     /// Get actual status and show all changes made from last commit
     /// </summary>
-    /// <returns></returns>
-    Task GetChanges();
+    /// <returns><see cref="AddedRemovedChanges"/> with count of added items and removed items or <see cref="Error"/></returns>
+    Task<OneOf<AddedRemovedChanges, Error>> GetChanges();
+}
+
+/// <summary>
+/// Interface that stores function for commits history operations
+/// </summary>
+public interface IRepoHistoryService
+{
+    /// <summary>
+    /// Simple method to fetch history of made commits on repo
+    /// </summary>
+    /// <returns><see cref="List{T}"/> with commits history or <see cref="Error"/></returns>
+    Task<OneOf<List<string>, Error>> GetCommitsHistoryAsync();
 }
