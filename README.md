@@ -49,4 +49,4 @@ dotnet run -- -h
 
 # Additional links
 - Milanote board: <strong>[Not created yet]</strong>
-- Trello board: <strong>[Not created yet]</strong>
+- Trello board: <strong>https://trello.com/b/uKlrGHbJ</strong>
