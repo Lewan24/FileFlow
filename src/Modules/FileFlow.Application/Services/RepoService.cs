@@ -2,6 +2,7 @@
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
+using FileFlow.Application.CodeExtensions;
 using FileFlow.Core.Entities;
 using FileFlow.Shared.Interfaces;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
     private readonly string _stateFileName = "state.data";
     private readonly string _configFileName = ".FileFlow.cfg";
     private readonly string _commitHistoryFileName = ".commits.history";
-    private readonly string _fileFlowIgnore = ".FileFlowIgnore";
+    //private readonly string _fileFlowIgnore = ".FileFlowIgnore";
     
     private async Task SaveCurrentStateAsync(string repoPath)
     {
@@ -30,12 +31,12 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
         }
 
         var files = Directory.GetFiles(repoPath, "*", SearchOption.AllDirectories)
-            .Where(f => f.Contains(repoPath))
+            .Where(f => f.Contains(repoPath) && !f.Contains(".FileFlow"))
             .Select(f => f.Replace(repoPath, "").TrimStart(Path.DirectorySeparatorChar))
             .ToList();
 
         var directories = Directory.GetDirectories(repoPath, "*", SearchOption.AllDirectories)
-            .Where(d => d.Contains(repoPath))
+            .Where(d => d.Contains(repoPath) && !d.Contains(".FileFlow"))
             .Select(d => d.Replace(repoPath, "").TrimStart(Path.DirectorySeparatorChar))
             .ToList();
 
@@ -44,48 +45,15 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
         await SaveNewestCommitToHiddenPrevDir(repoPath);
     }
 
-    private async Task SaveNewestCommitToHiddenPrevDir(string repoPath)
+    private Task SaveNewestCommitToHiddenPrevDir(string repoPath)
     {
         var prevDirPath = Path.Combine(repoPath, _hiddenFileFlowFilesDirName, "prev");
+        if (Directory.Exists(prevDirPath))
+            Directory.Delete(prevDirPath, true);
+        
+        DirectoryExtended.CopyRecursivelyWithExclude(new DirectorySourceTargetExclude(repoPath, prevDirPath, [".FileFlow"]));
 
-        await Task.Run(() =>
-        {
-            Copy(repoPath, prevDirPath);
-        });
-    }
-    
-    public static void Copy(string sourceDirectory, string targetDirectory)
-    {
-        DirectoryInfo diSource = new DirectoryInfo(sourceDirectory);
-        DirectoryInfo diTarget = new DirectoryInfo(targetDirectory);
-
-        CopyAll(diSource, diTarget);
-    }
-
-    private static void CopyAll(DirectoryInfo source, DirectoryInfo target)
-    {
-        Directory.CreateDirectory(target.FullName);
-
-        // Copy each file into the new directory.
-        foreach (FileInfo fi in source.GetFiles())
-        {
-            if (fi.Name == ".FileFlow")
-                continue;
-            
-            Console.WriteLine(@"Copying {0}\{1}", target.FullName, fi.Name);
-            fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
-        }
-
-        // Copy each subdirectory using recursion.
-        foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
-        {
-            if (diSourceSubDir.Name == ".FileFlow")
-                continue;
-
-            DirectoryInfo nextTargetSubDir =
-                target.CreateSubdirectory(diSourceSubDir.Name);
-            CopyAll(diSourceSubDir, nextTargetSubDir);
-        }
+        return Task.CompletedTask;
     }
     
     private async Task CreateInitConfigFileAsync(string repoName, string repoPath)
@@ -104,11 +72,11 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
         await File.WriteAllTextAsync(configFilePath, configJson);
     }
 
-    private Task CreateInitIgnoreFileAsync()
-    {
-        // TODO: To Implement
-        return Task.CompletedTask;
-    }
+    // private Task CreateInitIgnoreFileAsync()
+    // {
+    //     // TODO: To Implement
+    //     return Task.CompletedTask;
+    // }
     
     private async Task<RepoConfig?> GetConfigAsync()
     {
@@ -123,10 +91,10 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
     {
         var previousState = File.ReadAllLines(statePath).ToHashSet();
         var currentState = Directory.GetFiles(Directory.GetCurrentDirectory(), "*", SearchOption.AllDirectories)
-            .Where(f => f.Contains(config.RepoPathBase))
+            .Where(f => f.Contains(config.RepoPathBase)  && !f.Contains(".FileFlow"))
             .Select(f => f.Replace(config.RepoPathBase, "").TrimStart(Path.DirectorySeparatorChar))
             .Concat(Directory.GetDirectories(config.RepoPathBase, "*", SearchOption.AllDirectories)
-                .Where(d => d.Contains(config.RepoPathBase))
+                .Where(d => d.Contains(config.RepoPathBase)  && !d.Contains(".FileFlow"))
                 .Select(d => d.Replace(config.RepoPathBase, "").TrimStart(Path.DirectorySeparatorChar)))
             .ToHashSet();
 
@@ -239,7 +207,7 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
 
         if (changes.Added.Count == 0 && changes.Removed.Count == 0)
         {
-            logger.LogInformation("No changes detected.");
+            logger.LogInformation("No structure changes detected.");
             return new AddedRemovedChanges(0, 0);
         }
         
@@ -247,7 +215,7 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
             
         if (changes.Added.Count > 0)
         {
-            logger.LogInformation("Added:");
+            logger.LogInformation("New files/dirs:");
             Console.ForegroundColor = ConsoleColor.Green; 
             changes.Added.ForEach(Console.WriteLine);
             Console.ForegroundColor = tempForegroundColor;
@@ -255,7 +223,7 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
 
         if (changes.Removed.Count > 0)
         {
-            logger.LogInformation("Removed:");
+            logger.LogInformation("Removed files/dirs:");
             Console.ForegroundColor = ConsoleColor.DarkRed;
             changes.Removed.ForEach(Console.WriteLine);
             Console.ForegroundColor = tempForegroundColor;
@@ -264,72 +232,59 @@ internal class RepoService(ILogger<RepoService> logger) : IRepoService
         return new AddedRemovedChanges(changes.Added.Count, changes.Removed.Count);
     }
 
-    public async Task CompareCommitsAsync(string oldCommitPath, string newCommitPath)
+    private async Task CompareCommitsAsync(string oldCommitPath, string newCommitPath)
     {
         await CompareFilesAsync(oldCommitPath, newCommitPath);
     }
     
-    public async Task CompareFilesAsync(string oldCommitPath, string newCommitPath)
+    private async Task CompareFilesAsync(string oldCommitPath, string newCommitPath)
     {
-        //TODO: Fix comparing files
         var differ = new Differ();
         var inlineDiffBuilder = new InlineDiffBuilder(differ);
 
         var oldFiles = Directory.GetFiles(oldCommitPath, "*", SearchOption.AllDirectories)
             .Where(f => f.Contains(oldCommitPath)).ToList();
         var newFiles = Directory.GetFiles(newCommitPath, "*", SearchOption.AllDirectories)
-            .Where(f => f.Contains(newCommitPath)).ToList();
+            .Where(f => f.Contains(newCommitPath) && !f.Contains(".FileFlow")).ToList();
         
         foreach (var newFile in newFiles)
         {
             var relativePath = newFile.Replace(newCommitPath, "").TrimStart(Path.DirectorySeparatorChar);
             var oldFile = oldFiles.FirstOrDefault(f => f.EndsWith(relativePath));
+
+            if (oldFile == null)
+                continue;
             
-            if (oldFile != null)
-            {
-                var oldText = await File.ReadAllTextAsync(oldFile);
-                var newText = await File.ReadAllTextAsync(newFile);
+            var oldText = await File.ReadAllTextAsync(oldFile);
+            var newText = await File.ReadAllTextAsync(newFile);
                 
-                var diff = inlineDiffBuilder.BuildDiffModel(oldText, newText);
+            var diff = inlineDiffBuilder.BuildDiffModel(oldText, newText);
 
-                Console.WriteLine($"Changes in {relativePath}:");
+            if (diff.Lines.Count == 0)
+                continue;
+                
+            Console.WriteLine($"Changes in {relativePath}:");
 
-                foreach (var line in diff.Lines)
+            foreach (var line in diff.Lines)
+            {
+                switch (line.Type)
                 {
-                    switch (line.Type)
-                    {
-                        case ChangeType.Inserted:
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"+ {line.Text}");
-                            break;
-                        case ChangeType.Deleted:
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"- {line.Text}");
-                            break;
-                        case ChangeType.Modified:
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine($"<  {line.Text}");
-                            break;
-                    }
+                    case ChangeType.Inserted:
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"+ {line.Text}");
+                        break;
+                    case ChangeType.Deleted:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"- {line.Text}");
+                        break;
+                    case ChangeType.Modified:
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"<  {line.Text}");
+                        break;
                 }
-
-                Console.ResetColor();
             }
-            else
-            {
-                Console.WriteLine($"New file: {relativePath}");
-            }
-        }
 
-        foreach (var oldFile in oldFiles)
-        {
-            var relativePath = oldFile.Replace(oldCommitPath, "").TrimStart(Path.DirectorySeparatorChar);
-            var newFile = newFiles.FirstOrDefault(f => f.EndsWith(relativePath));
-
-            if (newFile == null)
-            {
-                Console.WriteLine($"Deleted file: {relativePath}");
-            }
+            Console.ResetColor();
         }
     }
     
