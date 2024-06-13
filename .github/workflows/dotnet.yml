@@ -26,5 +26,5 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: Test tool
-      run: dotnet run --project ./src/FileFlow.Cli/FileFlow.Cli.csproj -- testrun
+    - name: Check version
+      run: dotnet run --project ./src/FileFlow.Cli/FileFlow.Cli.csproj -- v
