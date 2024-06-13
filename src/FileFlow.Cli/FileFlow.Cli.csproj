@@ -27,8 +27,8 @@
       <ProjectReference Include="..\Modules\FileFlow.Shared\FileFlow.Shared.csproj" />
     </ItemGroup>
 
-    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-      <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)Scripts\IncrementVersion.ps1&quot; &quot;$(ProjectDir)Properties\AssemblyInfo.cs&quot;" />
-    </Target>
+<!--    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">-->
+<!--      <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)Scripts\IncrementVersion.ps1&quot; &quot;$(ProjectDir)Properties\AssemblyInfo.cs&quot;" />-->
+<!--    </Target>-->
 
 </Project>

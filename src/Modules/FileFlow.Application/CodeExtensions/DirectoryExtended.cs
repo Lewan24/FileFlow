@@ -1,45 +1,48 @@
-﻿namespace FileFlow.Application.CodeExtensions;
+﻿using FileFlow.Core.Entities;
 
-internal static class DirectoryExtented
+namespace FileFlow.Application.CodeExtensions;
+
+internal static class DirectoryExtended
 {
-    public static void Copy(string sourceDirectory, string targetDirectory)
+    public static void CopyRecursivelyWithExclude(DirectorySourceTargetExclude dirSrcTarget)
     {
-        DirectoryInfo diSource = new DirectoryInfo(sourceDirectory);
-        DirectoryInfo diTarget = new DirectoryInfo(targetDirectory);
+        DirectoryInfo diSource = new DirectoryInfo(dirSrcTarget.SourcePath);
+        DirectoryInfo diTarget = new DirectoryInfo(dirSrcTarget.TargetPath);
 
-        CopyAll(diSource, diTarget);
+        CopyAll(new DirectoryInfoSourceTargetExclude(diSource, diTarget, dirSrcTarget.Exclude));
     }
 
-    private static void CopyAll(DirectoryInfo source, DirectoryInfo target)
+    private static void CopyAll(DirectoryInfoSourceTargetExclude dirISrcTarget)
     {
-        Directory.CreateDirectory(target.FullName);
+        Directory.CreateDirectory(dirISrcTarget.Target.FullName);
 
-        CopyEachFileIntoNewDirectory(source, target);
-        CopyEachSubDirectoryUsingRecursion(source, target);
+        CopyEachFileIntoNewDirectory(dirISrcTarget);
+        CopyEachSubDirectoryUsingRecursion(dirISrcTarget);
     }
 
-    private static void CopyEachFileIntoNewDirectory(DirectoryInfo source, DirectoryInfo target)
+    private static void CopyEachFileIntoNewDirectory(DirectoryInfoSourceTargetExclude dirISrcTarget)
     {
-        foreach (FileInfo fi in source.GetFiles())
+        foreach (FileInfo fi in dirISrcTarget.Source.GetFiles())
         {
-            if (fi.Name == ".FileFlow")
+            if (dirISrcTarget.Exclude is not null && dirISrcTarget.Exclude.Contains(fi.Name))
                 continue;
             
             //Console.WriteLine(@"Copying {0}\{1}", target.FullName, fi.Name);
-            fi.CopyTo(Path.Combine(target.FullName, fi.Name), true);
+            fi.CopyTo(Path.Combine(dirISrcTarget.Target.FullName, fi.Name), true);
         }
     }
 
-    private static void CopyEachSubDirectoryUsingRecursion(DirectoryInfo source, DirectoryInfo target)
+    private static void CopyEachSubDirectoryUsingRecursion(DirectoryInfoSourceTargetExclude dirISrcTarget)
     {
-        foreach (DirectoryInfo diSourceSubDir in source.GetDirectories())
+        foreach (DirectoryInfo diSourceSubDir in dirISrcTarget.Source.GetDirectories())
         {
-            if (diSourceSubDir.Name == ".FileFlow")
+            if (dirISrcTarget.Exclude is not null && dirISrcTarget.Exclude.Contains(diSourceSubDir.Name))
                 continue;
 
             DirectoryInfo nextTargetSubDir =
-                target.CreateSubdirectory(diSourceSubDir.Name);
-            CopyAll(diSourceSubDir, nextTargetSubDir);
+                dirISrcTarget.Target.CreateSubdirectory(diSourceSubDir.Name);
+            
+            CopyAll(dirISrcTarget);
         }
     }
 }
