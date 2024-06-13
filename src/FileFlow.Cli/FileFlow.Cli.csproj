@@ -9,6 +9,8 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>fileflow</ToolCommandName>
         <PackageOutputPath>./nupkg</PackageOutputPath>
+        
+        <VersionSuffix>beta01</VersionSuffix>
     </PropertyGroup>
 
     <PropertyGroup>

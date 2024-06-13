@@ -4,7 +4,7 @@
 
 $assemblyInfoContent = Get-Content $AssemblyInfoPath
 
-# Find the InformationalVersion attribute and increment its version number
+# Find the version attributes and increment their version numbers
 $regex = [regex]::Escape('[assembly: AssemblyInformationalVersion("') + '([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)"' + [regex]::Escape(')]')
 $matches = [regex]::Matches($assemblyInfoContent, $regex)
 
@@ -25,5 +25,12 @@ if ($matches.Count -eq 1) {
     $newVersion = "$major.$minor.$build.$revision"
     $newAssemblyInfoContent = [regex]::Replace($assemblyInfoContent, $regex, "[assembly: AssemblyInformationalVersion(`"$newVersion`")]")
 
+    # Update AssemblyFileVersion and AssemblyVersion as well
+    $newAssemblyInfoContent = $newAssemblyInfoContent -replace '(?<=AssemblyFileVersion\(")\d+(\.\d+){3}', $newVersion
+    $newAssemblyInfoContent = $newAssemblyInfoContent -replace '(?<=AssemblyVersion\(")\d+(\.\d+){3}', $newVersion
+
     Set-Content $AssemblyInfoPath $newAssemblyInfoContent
 }
+
+# Set the version for dotnet pack
+Write-Host "##vso[build.updatebuildnumber]$newVersion"
