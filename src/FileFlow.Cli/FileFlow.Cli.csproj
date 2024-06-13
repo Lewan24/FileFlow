@@ -5,8 +5,16 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>fileflow</ToolCommandName>
+        <PackageOutputPath>./nupkg</PackageOutputPath>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+    
     <ItemGroup>
       <PackageReference Include="Cocona" Version="2.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Connections.Abstractions" Version="8.0.6" />
@@ -16,5 +24,9 @@
       <ProjectReference Include="..\Modules\FileFlow.Api\FileFlow.Api.csproj" />
       <ProjectReference Include="..\Modules\FileFlow.Shared\FileFlow.Shared.csproj" />
     </ItemGroup>
+
+    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+      <Exec Command="powershell -ExecutionPolicy Bypass -File &quot;$(ProjectDir)Scripts\IncrementVersion.ps1&quot; &quot;$(ProjectDir)Properties\AssemblyInfo.cs&quot;" />
+    </Target>
 
 </Project>
